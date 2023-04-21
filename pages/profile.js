@@ -8,7 +8,7 @@ import Layout from '../components/layout';
 
 export default function ProfileScreen() {
   const { data: session } = useSession();
-
+  const role = session.user.role
   const {
     handleSubmit,
     register,
@@ -28,6 +28,7 @@ export default function ProfileScreen() {
         name,
         email,
         password,
+        role
       });
       const result = await signIn('credentials', {
         redirect: false,

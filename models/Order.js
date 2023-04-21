@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const orderSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    admin: { type: mongoose.Schema.Types.ObjectId, ref: 'Seller', required: true },
     orderItems: [
       {
         name: { type: String, required: true },

@@ -34,7 +34,6 @@ function reducer(state, action) {
 }
 export default function AdminProdcutsScreen() {
     const router = useRouter();
-
     const [
       { loading, error, products, loadingCreate, successDelete, loadingDelete },
       dispatch,
@@ -44,17 +43,14 @@ export default function AdminProdcutsScreen() {
     error: '',
   });
   const createHandler = async () => {
+
     if (!window.confirm('Are you sure?')) {
       return;
     }
     try {
-      dispatch({ type: 'CREATE_REQUEST' });
-      const { data } = await axios.post(`/api/admin/products`);
-      dispatch({ type: 'CREATE_SUCCESS' });
-      toast.success('Product created successfully');
-      router.push(`/admin/product/${data.product._id}`);
+
+      router.push(`/admin/product`);
     } catch (err) {
-      dispatch({ type: 'CREATE_FAIL' });
       toast.error(getError(err));
     }
   };
@@ -63,7 +59,7 @@ export default function AdminProdcutsScreen() {
     const fetchData = async () => {
       try {
         dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/admin/products`);
+        const { data } = await axios.get(`/api/admin/products/get`);
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
       } catch (err) {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
@@ -107,9 +103,6 @@ export default function AdminProdcutsScreen() {
                 <a className="font-bold">Products</a>
               </Link>
             </li>
-            <li>
-              <Link href="/admin/users">Users</Link>
-            </li>
           </ul>
         </div>
         <div className="overflow-x-auto md:col-span-3">
@@ -136,7 +129,6 @@ export default function AdminProdcutsScreen() {
                     <th className="px-5 text-left">ID</th>
                     <th className="p-5 text-left">NAME</th>
                     <th className="p-5 text-left">PRICE</th>
-                    <th className="p-5 text-left">CATEGORY</th>
                     <th className="p-5 text-left">COUNT</th>
                     <th className="p-5 text-left">RATING</th>
                     <th className="p-5 text-left">ACTIONS</th>
@@ -144,22 +136,21 @@ export default function AdminProdcutsScreen() {
                 </thead>
                 <tbody>
                   {products.map((product) => (
-                    <tr key={product._id} className="border-b">
-                      <td className=" p-5 ">{product._id.substring(20, 24)}</td>
-                      <td className=" p-5 ">{product.name}</td>
+                    <tr key={product.itemId} className="border-b">
+                      <td className=" p-5 ">{product.itemId}</td>
+                      <td className=" p-5 ">{product.itemName}</td>
                       <td className=" p-5 ">${product.price}</td>
-                      <td className=" p-5 ">{product.category}</td>
-                      <td className=" p-5 ">{product.countInStock}</td>
+                      <td className=" p-5 ">{product.countinStock}</td>
                       <td className=" p-5 ">{product.rating}</td>
                       <td className=" p-5 ">
-                      <Link href={`/admin/product/${product._id}`} legacyBehavior>
+                      <Link href={`/admin/product/${product.itemId}`} legacyBehavior>
                           <a type="button" className="default-button">
                             Edit
                           </a>
                         </Link>
                         &nbsp;
                         <button
-                          onClick={() => deleteHandler(product._id)}
+                          onClick={() => deleteHandler(product.itemId)}
                           className="default-button"
                           type="button"
                         >
@@ -178,4 +169,4 @@ export default function AdminProdcutsScreen() {
   );
 }
 
-AdminProdcutsScreen.auth = { adminOnly: true };
+AdminProdcutsScreen.auth = true;

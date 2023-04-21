@@ -1,78 +1,21 @@
 import axios from 'axios';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useEffect, useReducer } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import Layout from '../../../components/layout';
 import { getError } from '../../../utils/error';
+import {useSession } from 'next-auth/react';
 
-function reducer(state, action) {
-  switch (action.type) {
-    case 'FETCH_REQUEST':
-      return { ...state, loading: true, error: '' };
-    case 'FETCH_SUCCESS':
-      return { ...state, loading: false, error: '' };
-    case 'FETCH_FAIL':
-      return { ...state, loading: false, error: action.payload };
-    case 'UPDATE_REQUEST':
-        return { ...state, loadingUpdate: true, errorUpdate: '' };
-    case 'UPDATE_SUCCESS':
-        return { ...state, loadingUpdate: false, errorUpdate: '' };
-    case 'UPDATE_FAIL':
-        return { ...state, loadingUpdate: false, errorUpdate: action.payload };
-  
-    case 'UPLOAD_REQUEST':
-        return { ...state, loadingUpload: true, errorUpload: '' };
-    case 'UPLOAD_SUCCESS':
-        return {
-          ...state,
-          loadingUpload: false,
-          errorUpload: '',
-        };
-    case 'UPLOAD_FAIL':
-        return { ...state, loadingUpload: false, errorUpload: action.payload };
-  
-    default:
-      return state;
-  }
-}
 export default function AdminProductEditScreen() {
-  const { query } = useRouter();
-  const productId = query.id;
-  const [{ loading, error, loadingUpdate }, dispatch] =
-    useReducer(reducer, {
-      loading: true,
-      error: '',
-    });
-  const {
+const {data:session } = useSession();
+const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
   } = useForm();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/admin/products/${productId}`);
-        dispatch({ type: 'FETCH_SUCCESS' });
-        setValue('name', data.itemName);
-        setValue('itemId', data.itemId);
-        setValue('warehouse',data.whouseId)
-        setValue('itemImage', data.itemImage);
-        setValue('price', data.price);
-        setValue('countInStock', data.countInStock);
-        setValue('description', data.description);
-        setValue('brand', data.brand);
-      } catch (err) {
-        dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
-      }
-    };
-
-    fetchData();
-  }, [productId, setValue]);
 
   const router = useRouter();
 
@@ -89,8 +32,7 @@ export default function AdminProductEditScreen() {
     brand
   }) => {
     try {
-      dispatch({ type: 'UPDATE_REQUEST' });
-      await axios.put(`/api/admin/products/${productId}`, {
+      await axios.post(`/api/admin/products`, {
         itemId,
         itemName,
         whouseId,
@@ -102,17 +44,22 @@ export default function AdminProductEditScreen() {
         description,
         brand
       });
-      dispatch({ type: 'UPDATE_SUCCESS' });
+      const sellerEmail=session.user.email;
+      console.log(sellerEmail);
+      await axios.post(`/api/admin/sellerLink`,{
+        sellerEmail,
+        itemId
+      })
       toast.success('Product updated successfully');
-      router.push('/admin/products');
+
+      router.push(`/admin/products`);
     } catch (err) {
-      dispatch({ type: 'UPDATE_FAIL', payload: getError(err) });
       toast.error(getError(err));
     }
   };
 
   return (
-    <Layout title={`Edit Product ${productId}`}>
+    <Layout title={`Create Product`}>
       <div className="grid md:grid-cols-4 md:gap-5">
         <div>
           <ul>
@@ -130,16 +77,12 @@ export default function AdminProductEditScreen() {
           </ul>
         </div>
         <div className="md:col-span-3">
-          {loading ? (
-            <div>Loading...</div>
-          ) : error ? (
-            <div className="alert-error">{error}</div>
-          ) : (
+
             <form
               className="mx-auto max-w-screen-md"
               onSubmit={handleSubmit(submitHandler)}
             >
-              <h1 className="mb-4 text-xl">{`Edit Product ${productId}`}</h1>
+              <h1 className="mb-4 text-xl">{`Create Product`}</h1>
               <div className="mb-4">
                 <label htmlFor="itemName">Item Name</label>
                 <input
@@ -288,15 +231,14 @@ export default function AdminProductEditScreen() {
                 )}
               </div>
               <div className="mb-4">
-                <button disabled={loadingUpdate} className="primary-button">
-                  {loadingUpdate ? 'Loading' : 'Update'}
+                <button className="primary-button">
+                   Create
                 </button>
               </div>
               <div className="mb-4">
                 <Link href={`/admin/products`}>Back</Link>
               </div>
             </form>
-          )}
         </div>
       </div>
     </Layout>

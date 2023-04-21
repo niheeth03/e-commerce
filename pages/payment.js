@@ -2,7 +2,6 @@ import { useRouter } from 'next/router';
 import React, { useContext, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
-import CheckoutWizard from '../components/CheckoutWizard';
 import Layout from '../components/layout';
 import { Store } from '../utils/Store';
 
@@ -40,10 +39,9 @@ export default function PaymentScreen() {
 
   return (
     <Layout title="Payment Method">
-      <CheckoutWizard activeStep={2} />
       <form className="mx-auto max-w-screen-md" onSubmit={submitHandler}>
         <h1 className="mb-4 text-xl">Payment Method</h1>
-        {['PayPal', 'Stripe', 'CashOnDelivery'].map((payment) => (
+        {['PayPal', 'Stripe', 'CashOnDelivery','Amazon Pay','Google Pay'].map((payment) => (
           <div key={payment} className="mb-4">
             <input
               name="paymentMethod"

@@ -8,11 +8,10 @@ const handler = async (req, res) => {
     return res.status(401).send('signin required');
   }
 
-  const { user } = session;
   await db.connect();
   const newOrder = new Order({
     ...req.body,
-    user: user._id,
+    user: session.user.email,
   });
 
   const order = await newOrder.save();

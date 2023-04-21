@@ -1,6 +1,6 @@
 import { getSession } from 'next-auth/react';
 import Order from '../../../../models/Order';
-import db from '../../../../utils/db';
+import dbsql from '../../../../utils/dbsql';
 
 const handler = async (req, res) => {
   const session = await getSession({ req });
@@ -8,10 +8,10 @@ const handler = async (req, res) => {
     return res.status(401).send('signin required');
   }
 
-  await db.connect();
+  await dbsql.connect();
 
   const order = await Order.findById(req.query.id);
-  await db.disconnect();
+  await dbsql.disconnect();
   res.send(order);
 };
 

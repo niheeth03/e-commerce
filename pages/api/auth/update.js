@@ -1,6 +1,9 @@
 import { getSession } from 'next-auth/react';
 import bcryptjs from 'bcryptjs';
 import User from '../../../models/User';
+import Seller from '../../../models/Seller';
+import Advertiser from '../../../models/Advertiser';
+
 import db from '../../../utils/db';
 
 async function handler(req, res) {
@@ -14,7 +17,7 @@ async function handler(req, res) {
   }
 
   const { user } = session;
-  const { name, email, password } = req.body;
+  const { name, email, password ,role } = req.body;
 
   if (
     !name ||
@@ -29,19 +32,52 @@ async function handler(req, res) {
   }
 
   await db.connect();
-  const toUpdateUser = await User.findById(user._id);
-  toUpdateUser.name = name;
-  toUpdateUser.email = email;
+  if(role==='user'){
+    const toUpdateUser = await User.findById(user._id);
+    toUpdateUser.name = name;
+    toUpdateUser.email = email;
 
-  if (password) {
-    toUpdateUser.password = bcryptjs.hashSync(password);
+    if (password) {
+      toUpdateUser.password = bcryptjs.hashSync(password);
+    }
+
+    await toUpdateUser.save();
+    await db.disconnect();
+    res.send({
+      message: 'User updated',
+    });
   }
+  else if(role==='seller'){
+    const toUpdateUser = await Seller.findById(user._id);
+    toUpdateUser.name = name;
+    toUpdateUser.email = email;
 
-  await toUpdateUser.save();
-  await db.disconnect();
-  res.send({
-    message: 'User updated',
-  });
+    if (password) {
+      toUpdateUser.password = bcryptjs.hashSync(password);
+    }
+
+    await toUpdateUser.save();
+    await db.disconnect();
+    res.send({
+      message: 'Seller updated',
+    });
+  }
+  else if(role==='advertiser'){
+      const toUpdateUser = await Advertiser.findById(user._id);
+      toUpdateUser.name = name;
+      toUpdateUser.email = email;
+  
+      if (password) {
+        toUpdateUser.password = bcryptjs.hashSync(password);
+      }
+  
+      await toUpdateUser.save();
+      await db.disconnect();
+      res.send({
+        message: 'Advertiser updated',
+      });
+  }
 }
+
 
 export default handler;

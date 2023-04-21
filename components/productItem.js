@@ -5,15 +5,15 @@ import React from 'react'
 export default function productItem({product, addToCartHandler }) {
   return (
     <div className='card'>
-        <Link href={`/product/${product.slug}`} legacyBehavior>
+        <Link href={`/product/${product.itemId}`} legacyBehavior>
             <a>
-                <img src={product.image} alt={product.name} className="rounded shadow object-cover h-64 w-full"/>
+                <img src={product.image} alt={product.itemName} className="rounded shadow object-cover h-64 w-full"/>
             </a>
         </Link>
         <div className='flex flex-col items-center justify-center p-5'>
-            <Link href={`/product/${product.slug}`} legacyBehavior>
+            <Link href={`/product/${product.itemId}`} legacyBehavior>
                 <a><h2 className="text-lg">
-                    {product.name}
+                    {product.itemName}
                 </h2></a>
             </Link>
             <p className="mb-2">{product.brand}</p>

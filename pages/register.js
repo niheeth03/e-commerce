@@ -1,5 +1,4 @@
-import Link from 'next/link';
-import React, { useEffect } from 'react';
+import React, { useEffect,useState } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import Layout from '../components/layout';
@@ -7,6 +6,7 @@ import { getError } from '../utils/error';
 import { toast } from 'react-toastify';
 import { useRouter } from 'next/router';
 import axios from 'axios';
+
 
 export default function LoginScreen() {
   const { data: session } = useSession();
@@ -19,6 +19,12 @@ export default function LoginScreen() {
       router.push(redirect || '/');
     }
   }, [router, session, redirect]);
+  const [selectedOccupation, setSelectedOccupation] = useState('');
+
+  const handleOccupationChange = (event) => {
+    setSelectedOccupation(event.target.value);
+  };
+
 
   const {
     handleSubmit,
@@ -26,13 +32,15 @@ export default function LoginScreen() {
     getValues,
     formState: { errors },
   } = useForm();
-  const submitHandler = async ({ name, email, password }) => {
+  const submitHandler = async ({ name, email, password}) => {
     try {
-      await axios.post('/api/auth/signup', {
+      const res=await axios.post('/api/auth/signup', {
         name,
         email,
         password,
-      });
+        selectedOccupation
+      })
+      console.log(res)
 
       const result = await signIn('credentials', {
         redirect: false,
@@ -43,6 +51,7 @@ export default function LoginScreen() {
         toast.error(result.error);
       }
     } catch (err) {
+      console.log("2")
       toast.error(getError(err));
     }
   };
@@ -128,13 +137,22 @@ export default function LoginScreen() {
               <div className="text-red-500 ">Password do not match</div>
             )}
         </div>
+        <div className="mb-4">
+                <label htmlFor="selectedOccupation" class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Which best suits you?</label>
+                <select id="selectedOccupation" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" value={selectedOccupation} onChange={handleOccupationChange}>
+                  <option value="">Choose one</option>
+                  <option value="User">User</option>
+                  <option value="Seller">Seller</option>
+                  <option value="Advertiser">Advertiser</option>
+                </select>
+                {selectedOccupation &&(
+              <div className="text-red-500 ">{selectedOccupation}</div>
+            )}
+        </div>
+
 
         <div className="mb-4 ">
           <button className="primary-button">Register</button>
-        </div>
-        <div className="mb-4 ">
-          Don&apos;t have an account? &nbsp;
-          <Link href={`/register?redirect=${redirect || '/'}`}>Register</Link>
         </div>
       </form>
     </Layout>

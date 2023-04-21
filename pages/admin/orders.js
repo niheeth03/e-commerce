@@ -84,7 +84,7 @@ export default function AdminOrderScreen() {
                     <tr key={order._id} className="border-b">
                       <td className="p-5">{order._id.substring(20, 24)}</td>
                       <td className="p-5">
-                        {order.user ? order.user.name : 'DELETED USER'}
+                        { order.user.name}
                       </td>
                       <td className="p-5">
                         {order.createdAt.substring(0, 10)}
@@ -93,12 +93,12 @@ export default function AdminOrderScreen() {
                       <td className="p-5">
                         {order.isPaid
                           ? `${order.paidAt.substring(0, 10)}`
-                          : 'not paid'}
+                          : 'Not paid'}
                       </td>
                       <td className="p-5">
                         {order.isDelivered
                           ? `${order.deliveredAt.substring(0, 10)}`
-                          : 'not delivered'}
+                          : 'Not delivered'}
                       </td>
                       <td className="p-5">
                         <Link href={`/order/${order._id}`} passHref legacyBehavior>
@@ -117,4 +117,4 @@ export default function AdminOrderScreen() {
   );
 }
 
-AdminOrderScreen.auth = { adminOnly: true };
+AdminOrderScreen.auth = true;

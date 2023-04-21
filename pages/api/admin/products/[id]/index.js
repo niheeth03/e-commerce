@@ -1,60 +1,89 @@
 import { getSession } from 'next-auth/react';
-import Product from '../../../../../models/Product';
-import db from '../../../../../utils/db';
+import dbsql from '../../../../../utils/dbsql';
 
 const handler = async (req, res) => {
   const session = await getSession({ req });
-  if (!session || (session && !session.user.isAdmin)) {
+  if (!session || (session && !session.user.role=='seller')) {
     return res.status(401).send('signin required');
   }
 
   const { user } = session;
   if (req.method === 'GET') {
-    return getHandler(req, res, user);
+    return getHandler(req, res);
   } else if (req.method === 'PUT') {
-    return putHandler(req, res, user);
+    return putHandler(req, res);
 } else if (req.method === 'DELETE') {
-    return deleteHandler(req, res, user);
+    return deleteHandler(req, res,user);
   } else {
     return res.status(400).send({ message: 'Method not allowed' });
   }
 };
 const getHandler = async (req, res) => {
-  await db.connect();
-  const product = await Product.findById(req.query.id);
-  await db.disconnect();
-  res.send(product);
+  dbsql.connect();
+  const query = `SELECT * FROM item where itemId=${req.query.id}`;
+  const results = dbsql.query(query)
+  dbsql.end();
+
+  return res.status(200).json(JSON.stringify(results[0]))
 };
 const putHandler = async (req, res) => {
-  await db.connect();
-  const product = await Product.findById(req.query.id);
-  if (product) {
-    product.name = req.body.name;
-    product.slug = req.body.slug;
-    product.price = req.body.price;
-    product.category = req.body.category;
-    product.image = req.body.image;
-    product.brand = req.body.brand;
-    product.countInStock = req.body.countInStock;
-    product.description = req.body.description;
-    await product.save();
-    await db.disconnect();
-    res.send({ message: 'Product updated successfully' });
-  } else {
-    await db.disconnect();
-    res.status(404).send({ message: 'Product not found' });
+  const {
+    itemId,
+    itemName,
+    whouseId,
+    itemImage,
+    price,
+    countinStock,
+    rating,
+    numOfReviews,
+    description,
+    brand
+  } = req.body;
+  const Id = req.query.id;
+
+  const query = `
+    UPDATE item
+    SET itemName = '${itemName}',
+      itemId = '${itemId}',
+      whouseId = ${whouseId},
+      itemImage = '${itemImage}',
+      price = '${price}',
+      countinStock = ${countinStock},
+      rating =${rating},
+      numOfReviews = ${numOfReviews},
+      description='${description}',
+      brand='${brand}',
+    WHERE itemId = '${Id}'
+  `;
+
+  try {
+    dbsql.connect();
+    const results = await dbsql.query(query);
+    dbsql.end();
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    return res.status(200).json({ message: 'Product updated successfully' });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
+
 const deleteHandler = async (req, res) => {
-    await db.connect();
-    const product = await Product.findById(req.query.id);
-    if (product) {
-      await product.remove();
-      await db.disconnect();
-      res.send({ message: 'Product deleted successfully' });
-    } else {
-      await db.disconnect();
-      res.status(404).send({ message: 'Product not found' });
-    }
-  };
+  const { id } = req.query;
+  const query = `DELETE FROM item WHERE itemId = ${id}`;
+  const query2=`DELETE FROM selleritems WHERE itemId = ${id}`;
+  const query3 =`DELETE FROM cartitems WHERE itemId = ${id}`;
+  try {
+    await dbsql.query(query);
+    await dbsql.query(query2);
+    await dbsql.query(query3)
+    return res.status(200).json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
 export default handler;

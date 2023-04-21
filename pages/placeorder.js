@@ -19,7 +19,7 @@ export default function PlaceOrderScreen() {
 
   const itemsPrice = round2(
     cartItems.reduce((a, c) => a + c.quantity * c.price, 0)
-  ); // 123.4567 => 123.46
+  ); 
 
   const shippingPrice = itemsPrice > 200 ? 0 : 15;
   const taxPrice = round2(itemsPrice * 0.15);
@@ -104,13 +104,13 @@ export default function PlaceOrderScreen() {
                 </thead>
                 <tbody>
                   {cartItems.map((item) => (
-                    <tr key={item._id} className="border-b">
+                    <tr key={item.itemId} className="border-b">
                       <td>
-                        <Link href={`/product/${item.slug}`} legacyBehavior>
+                        <Link href={`/product/${item.itemId}`} legacyBehavior>
                           <a className="flex items-center">
                             <Image
-                              src={item.image}
-                              alt={item.name}
+                              src={item.itemImage}
+                              alt={item.itemName}
                               width={50}
                               height={50}
                             ></Image>

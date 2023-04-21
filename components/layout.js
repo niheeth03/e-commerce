@@ -1,5 +1,5 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Store } from '../utils/Store';
+import React, {useEffect, useState } from 'react';
+import axios from 'axios';
 import Head from 'next/head';
 import Link from 'next/link';
 import { signOut,useSession } from 'next-auth/react';
@@ -7,21 +7,23 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {Menu} from "@headlessui/react";
 import DropDownLink from "./DropDownLink"
-import Cookies from 'js-cookie';
 import { useRouter } from 'next/router';
 import { SearchIcon } from '@heroicons/react/outline';
 
 export default function Layout({title,children}) {
     const { status, data: session } = useSession();
-    const { state,dispatch } = useContext(Store);
-    const { cart } = state;
-    const [cartItemsCount, setCartItemsCount] = useState(0);
+    const [cartItemsCount, setCartItemsCount] = useState('');
     useEffect(() => {
-      setCartItemsCount(cart.cartItems.reduce((a, c) => a + c.quantity, 0));
-    }, [cart.cartItems]);
+      if(session){
+        const fetch=async()=>{
+          const results=await axios.get(`/api/cart/'${session.user.email}'`)
+          const length=results.message;
+          setCartItemsCount(length);
+        }
+        fetch();
+      }
+    }, []);
     const logoutClickHandler=()=>{
-        Cookies.remove('cart');
-        dispatch({type:'CART_RESET'})
         signOut({callbackUrl:'/login'});
 
     }
@@ -32,6 +34,7 @@ export default function Layout({title,children}) {
       e.preventDefault();
       router.push(`/search?query=${query}`);
     };
+
   
   return (
     <>
@@ -64,7 +67,7 @@ export default function Layout({title,children}) {
               </button>
             </form>
                     <div className="p-2">
-                        <Link href="/cart" legacyBehavior><a className="p-2">Cart {cartItemsCount > 0 && (
+                        <Link href='/cart' legacyBehavior><a className="p-2">Cart {cartItemsCount > 0 && (
                     <span className="ml-1 rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">
                       {cartItemsCount}
                     </span>
@@ -79,17 +82,30 @@ export default function Layout({title,children}) {
                                 <Menu.Items className="absolute right-0 w-56 origin-top-right shadow-lg bg-white">
                                     <Menu.Item><DropDownLink className="dropdown-link" href="/profile">Profile</DropDownLink></Menu.Item>
                                     <Menu.Item><DropDownLink className="dropdown-link" href="/order-history">Order History</DropDownLink></Menu.Item>
-                                    {session.user.isAdmin && (
+                                    {session.user.role=='seller' && (
                                     <Menu.Item>
                                         <DropDownLink
                                         className="dropdown-link"
                                         href="/admin/dashboard"
                                         >
-                                        Admin Dashboard
+                                        Dashboard
                                         </DropDownLink>
                                     </Menu.Item>
+                                    
+
                                     )}
-                                    <Menu.Item><DropDownLink className="dropdown-link" href="#" onClickHandler={logoutClickHandler}>Logout</DropDownLink></Menu.Item>
+                                    {session.user.role=='seller' && (
+                                    <Menu.Item>
+                                        <DropDownLink
+                                        className="dropdown-link"
+                                        href="/admin/products"
+                                        >
+                                        Show your products
+                                        </DropDownLink>
+                                    </Menu.Item>
+        
+                                    )}
+                                    <Menu.Item><DropDownLink className="dropdown-link" href="#" onClick={logoutClickHandler}>Logout</DropDownLink></Menu.Item>
                                 </Menu.Items>
                             </Menu>
                         ) : (

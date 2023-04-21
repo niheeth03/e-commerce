@@ -1,7 +1,11 @@
+// pages/api/auth/[...nextauth].js
+
 import bcryptjs from 'bcryptjs';
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import User from '../../../models/User';
+import Seller from '../../../models/Seller';
+import Advertiser from '../../../models/Advertiser'
 import db from '../../../utils/db';
 
 export default NextAuth({
@@ -11,12 +15,12 @@ export default NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user?._id) token._id = user._id;
-      if (user?.isAdmin) token.isAdmin = user.isAdmin;
+      if (user?.role) token.role = user.role;
       return token;
     },
     async session({ session, token }) {
       if (token?._id) session.user._id = token._id;
-      if (token?.isAdmin) session.user.isAdmin = token.isAdmin;
+      if (token?.role) session.user.role = token.role;
       return session;
     },
   },
@@ -24,7 +28,13 @@ export default NextAuth({
     CredentialsProvider({
       async authorize(credentials) {
         await db.connect();
-        const user = await User.findOne({
+        let user = await User.findOne({
+          email: credentials.email,
+        });
+        let seller = await Seller.findOne({
+          email: credentials.email,
+        });
+        let advertiser = await Advertiser.findOne({
           email: credentials.email,
         });
         await db.disconnect();
@@ -33,8 +43,23 @@ export default NextAuth({
             _id: user._id,
             name: user.name,
             email: user.email,
-            image: 'f',
-            isAdmin: user.isAdmin,
+            role: 'user',
+          };
+        }
+        else if (seller && bcryptjs.compareSync(credentials.password, seller.password)) {
+          return {
+            _id: seller._id,
+            name: seller.name,
+            email: seller.email,
+            role: 'seller',
+          };
+        }
+        else if (advertiser && bcryptjs.compareSync(credentials.password, seller.password)) {
+          return {
+            _id: advertiser._id,
+            name: advertiser.name,
+            email: advertiser.email,
+            role: 'advertiser',
           };
         }
         throw new Error('Invalid email or password');

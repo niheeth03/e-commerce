@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const userSchema = new mongoose.Schema(
+const advertiserSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -11,5 +11,5 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
-export default User;
+const Advertiser = mongoose.models.Advertiser || mongoose.model('Advertiser', advertiserSchema);
+export default Advertiser;
