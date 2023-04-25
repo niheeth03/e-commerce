@@ -49,6 +49,7 @@ export default function CartScreen(){
     const fetchData = async () => {
       try {
         dispatch({ type: 'FETCH_REQUEST' });
+        await axios.post(`/api/orders/order-update`)
         const { data } = await axios.get(`/api/cart/get`);
 
         dispatch({ type: 'FETCH_SUCCESS', payload: data });

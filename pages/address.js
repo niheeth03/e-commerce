@@ -44,12 +44,39 @@ export default function AddressScreen() {
     ] = useReducer(reducer, {
     loading: true,
     products: [],
+    bank:[],
     error: '',
   });
 
   const [cart,setCart] =useState([]);
+  const [banking,setBanking] =useState([]);
   const [finish,setFinish]=useState(false);
   const [address,setAddress]=useState([])
+  const [bank,setBank]=useState([])
+  const [clicked, setClicked] = useState(false);
+  const [clicked2, setClicked2] = useState(false);
+  const handleButtonClick = (houseNo) => {
+    selectHandler(houseNo);
+    setClicked(true);
+  };
+
+  const handleButtonClickBank = (houseNo) => {
+    selectHandlerBank(houseNo);
+    setClicked2(true);
+  };
+
+
+  const buttonStyle = clicked
+    ? { backgroundColor: "green", color: "white" }
+    : {};
+
+  const buttonStyle2 = clicked2
+    ? { backgroundColor: "green", color: "white" }
+    : {};
+
+  const buttonText = clicked ? "Selected" : "Select";
+  
+  const buttonText2 = clicked2 ? "Selected" : "Select";
 
   const submitHandler=async()=>{
         const {data} =await axios.get(`/api/cart/get`);
@@ -57,16 +84,38 @@ export default function AddressScreen() {
         setFinish(true);
   }
 
+  function generateRandomNumber() {
+    const min = 100000;
+    const max = 999999;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
   const selectHandler=async(houseNo)=>{
     console.log(houseNo);
     const {data} = await axios.get(`/api/address/${houseNo}`);
     setAddress(data);
+    toast.success('Address selected');
+
+  }
+  const selectHandlerBank=async(houseNo)=>{
+    console.log(houseNo);
+    const {data} = await axios.get(`/api/bank/${houseNo}`);
+    setBank(data);
+    toast.success('Bank selected');
 
   }
   const createHandler = async () => {
 
     try {
       router.push(`/newAddress`);
+    } catch (err) {
+      toast.error(getError(err));
+    }
+  };
+  const createHandlerBank = async () => {
+
+    try {
+      router.push(`/newBank`);
     } catch (err) {
       toast.error(getError(err));
     }
@@ -78,6 +127,10 @@ export default function AddressScreen() {
         dispatch({ type: 'FETCH_REQUEST' });
         const { data } = await axios.get(`/api/address/get`);
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
+        const dat=await axios.get(`/api/bank/get`);
+        setBanking(dat.data)
+        console.log(dat.data)
+
       } catch (err) {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
       }
@@ -100,18 +153,57 @@ export default function AddressScreen() {
         dispatch({ type: 'DELETE_REQUEST' });
         await axios.post(`/api/address/delete`,{userEmail,houseNo});
         dispatch({ type: 'DELETE_SUCCESS' });
-        toast.success('Address deleted successfully');
     } catch (err) {
         dispatch({ type: 'DELETE_FAIL' });
         toast.error(getError(err));
     }
     };
+    const deleteHandlerBank = async (houseNo) => {
+        if (!window.confirm('Are you sure?')) {
+          return;
+      }
+      const userEmail=session.user.email;
+        try {
+          await axios.post(`/api/bank/delete`,{userEmail,houseNo});
+          dispatch({ type: 'DELETE_SUCCESS' });
+      } catch (err) {
+          toast.error(getError(err));
+      }
+      };
+
+    const orderHandler = async () => {
+        if(bank.amount< cart.reduce((a, c) => a + c.quantity * c.price, 0)){
+            toast.error('No sufficient balance')
+            return 
+        }
+        try{
+        const Id=generateRandomNumber();
+        const orderId=Id.toString();
+        const userEmail=(session.user.email).toString();
+
+        for (const cartItem of cart) {
+            const deduce=bank.amount-cartItem.price*cartItem.quantity;
+            console.log(deduce)
+            // console.log(deduce)
+            await axios.post(`/api/orders`, {
+            orderId,userEmail,cartItem,address,selectedPaymentMethod
+            });
+            const accountNo=bank.accountNo
+            await axios.post(`api/bank/update`,{userEmail,accountNo,deduce})
+        }
+        toast.success('Order created successfully');
+        await axios.post(`/api/cart/item`,{userEmail})
+        router.push('/order-tracking')
+      } catch (err) {
+        toast.error(getError(err));
+      }
+    };
   return (
-    <Layout title="Addresses">
+    <Layout title="Place-Order">
         <CheckoutWizard activeStep={1} />
         <div className="overflow-x-auto md:col-span-3 mb-100">
         <div className="flex justify-between">
-            <h1 className="mb-4 text-xl">Addresses</h1>
+            <h1 className="mb-4 text-xl"><strong>Addresses</strong></h1>
             {loadingDelete && <div>Deleting Address...</div>}
             <button
               disabled={loadingCreate}
@@ -147,11 +239,12 @@ export default function AddressScreen() {
                       <td className=" p-5 ">{product.country}</td>
                       <td className=" p-5 ">
                       <button
-                          onClick={() => selectHandler(product.houseNo)}
+                          onClick={() => handleButtonClick(product.houseNo)}
                           className="default-button"
                           type="button"
+                          style={buttonStyle}
                         >
-                          Select
+                          {buttonText}
                     </button>
                         &nbsp;
                         <button
@@ -169,7 +262,62 @@ export default function AddressScreen() {
             </div>
           )}
         </div>
-        <h1 className="mb-4 text-xl">Payment Method</h1>
+        <div className="overflow-x-auto md:col-span-3 mb-100">
+        <div className="flex justify-between">
+            <h1 className="mb-4 text-xl"><strong>Bank Account</strong></h1>
+            {loadingDelete && <div>Deleting Bank Account...</div>}
+            <button
+              disabled={loadingCreate}
+              onClick={createHandlerBank}
+              className="primary-button"
+            >
+              {loadingCreate ? 'Loading' : 'New Bank Account'}
+            </button>
+          </div>
+          {loading ? (
+            <div>Loading...</div>
+          ) : error ? (
+            <div className="alert-error">{error}</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="border-b">
+                  <tr>
+                    <th className="px-5 text-left">NAME</th>
+                    <th className="p-5 text-left">ACCOUNT NO</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {banking.map((product) => (
+                    <tr key={product.itemId} className="border-b">
+                      <td className=" p-5 ">{product.bankName}</td>
+                      <td className=" p-5 ">{product.accountNo}</td>
+                      <td className=" p-5 ">
+                      <button
+                          onClick={() => handleButtonClickBank(product.accountNo)}
+                          className="default-button"
+                          type="button"
+                          style={buttonStyle2}
+                        >
+                          {buttonText2}
+                    </button>
+                        &nbsp;
+                        <button
+                          onClick={() => deleteHandlerBank(product.accountNo)}
+                          className="default-button"
+                          type="button"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <h1 className="mb-4 text-xl"><strong>Payment Method</strong></h1>
         {['PayPal', 'Stripe', 'CashOnDelivery','Amazon Pay','Google Pay'].map((payment) => (
           <div key={payment} className="mb-4">
             <input
@@ -199,10 +347,11 @@ export default function AddressScreen() {
           <button className="primary-button" onClick={() => submitHandler()}>Submit</button>
         </div>
 
-
-        {finish && <div className="overflow-x-auto md:col-span-3 mb-100">
-        <div className="flex justify-between">
-            <h1 className="mb-4 text-xl">Order Summary</h1>
+        {finish && <div className="overflow-x-auto md:col-span-3 mb-100 mt-30">
+        <div className="flex justify-between mt-30" style={{textAlign: "center"}}>
+           <div style={{textAlign: "center"}}>
+            <h1 className="mb-4 text-xl "><b>Order Summary</b></h1>
+            </div>
           </div>
           {loading ? (
             <div>Loading...</div>
@@ -211,7 +360,7 @@ export default function AddressScreen() {
           ) : (
             
             <div className="overflow-x-auto">
-               <h1 className="mb-4 text-xl">Items Ordered</h1>
+               <h1 className="mb-4 text-xl mb-10 mt-10"><strong>Items Ordered</strong></h1>
               <table className="min-w-full">
                 <thead className="border-b">
                   <tr>
@@ -234,7 +383,8 @@ export default function AddressScreen() {
                   Subtotal ({cart.reduce((a, c) => a + c.quantity, 0)}) : ₹
                   {cart.reduce((a, c) => a + c.quantity * c.price, 0)}
               </div>
-              <h3 className="mb-4 text-xl">Address</h3>
+              
+              <h3 className="mb-4 text-xl mb-10 mt-10"><strong>Address</strong></h3>
               <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead className="border-b">
@@ -256,11 +406,30 @@ export default function AddressScreen() {
                     </tr>
                 </tbody>
               </table>
-            </div></div>
+            </div>
+                          <h3 className="mb-4 text-xl mb-10 mt-10"><strong>Bank</strong></h3>
+                          <div className="overflow-x-auto">
+                          <table className="min-w-full">
+                            <thead className="border-b">
+                              <tr>
+                                <th className="px-5 text-left">NAME</th>
+                                <th className="p-5 text-left">ACCOUNT NO</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                                <tr key={bank.accountNo} className="border-b">
+                                  <td className=" p-5 ">{bank.bankName}</td>
+                                  <td className=" p-5 ">{bank.accountNo}</td>
+                                </tr>
+                            </tbody>
+                          </table>
+                        </div></div>
             )}
-
-            <h3 className="mb-4 text-xl">Payment Method</h3>
-            <h3 className="mb-4 text-xl">{selectedPaymentMethod}</h3>
+            
+             
+            <h3 className="mb-4 text-xl mb-10 mt-20"><strong>Payment Method:</strong>{selectedPaymentMethod}</h3>
+            <div style={{textAlign: "center"}}>
+            <button className="primary-button mb-20" onClick={() => orderHandler()}>Order</button></div>
         </div>
         }
         

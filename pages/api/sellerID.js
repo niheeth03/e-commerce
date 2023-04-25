@@ -1,4 +1,4 @@
-import dbsql from '../../../utils/dbsql';
+import dbsql from '../../utils/dbsql';
 import {getSession} from 'next-auth/react'
 const handler = async (req, res) => {
    if (req.method == 'GET'){
@@ -11,16 +11,15 @@ const handler = async (req, res) => {
 
 const getHandler = async (req, res) => {
     const session = await getSession({ req });
-    const query = `SELECT * FROM cartitems,item where userEmail='${session.user.email}' and item.itemId=cartitems.itemId`;
+    const query = `SELECT itemID FROM selleritems where sellerEmail='${session.user.email}' `;
     const results = await new Promise((resolve, reject) => {
         dbsql.query(query, (error, results) => {
           if (error) reject(error);
           resolve(results);
         });
       });
-
     return res.status(200).json(JSON.parse(JSON.stringify(results)))
-  };
+};
 
 
 

@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import React, {useEffect,useReducer} from 'react';
+import React, {useEffect,useReducer,useState } from 'react';
 // import { XCircleIcon } from '@heroicons/react/outline';
 import Layout from '../components/layout';
 import { useRouter } from 'next/router';
@@ -37,6 +37,8 @@ function reducer(state, action) {
 export default function CartScreen(){
   const {data:session}=useSession();
   const router = useRouter();
+  const [days,setDays]=useState('')
+  const [hours,setHours]=useState('')
   const [
     { loading,error,products, successDelete, loadingDelete },
     dispatch,
@@ -45,6 +47,8 @@ export default function CartScreen(){
   products: [],
   error: '',
 });
+const [clicked,setClick]=useState(false)
+const [whouse,setWhouse]=useState([])
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -66,25 +70,6 @@ export default function CartScreen(){
       }
     }, [successDelete]);
 
-  // const removeOrderHandler = async(itemId,paidAt,quantity,itemName) => {
-  //   if (!window.confirm('Are you sure?')) {
-  //     return;
-  //   }
-  //   try {
-  //       console.log(paidAt)
-  //     dispatch({ type: 'DELETE_REQUEST' });
-  //     console.log(itemId)
-  //     const product= {itemName,quantity,itemId}
-  //     const userEmail=session.user.email
-  //     await axios.post(`/api/orders/order-delete/`,{userEmail,product,paidAt});
-  //     dispatch({ type: 'DELETE_SUCCESS' });
-  //     toast.success('Order deleted successfully');
-  //   } catch (err) {
-  //     dispatch({ type: 'DELETE_FAIL' });
-  //     toast.error(getError(err));
-  //   }
-  // };
-
   const removeOrderHandler = async(itemId,paidAt,quantity,itemName) => {
     if (!window.confirm('Are you sure?')) {
       return;
@@ -103,20 +88,27 @@ export default function CartScreen(){
       toast.error(getError(err));
     }
   };
-  const updateLiveLocation= async (itemId,returnDeadline,paidAt,quantity,itemName) => {
-    const deliver=new Date(returnDeadline).getTime();
-    const now =new Date().getTime();
-
-    if(deliver<now){
-      toast.error('Its been more than 5 days since we delivered this item for you ,We cant accept the return now. Sorry !!');
-      return 
-    }
-    const product= {itemName,quantity,itemId}
-    const userEmail=session.user.email
-    await axios.post(`/api/orders/order-history/`,{userEmail,product,paidAt});
+  const updateLiveLocation= async (itemId,deliveredAt) => {
+    setClick(true)
     const itemData= await axios.get(`/api/product/${itemId}`);
     console.log(itemData)
-    toast.success('Product returned . Your money will be credited within 24 hrs');
+    const userEmail=session.user.email;
+    console.log(userEmail);
+    const whouseId=itemData.data.whouseId;
+    console.log(whouseId)
+    const whouse=axios.post(`api/whouse`,{whouseId})
+    whouse.then(result => {
+        console.log(result.data); // logs the data object
+        setWhouse(result.data[0])
+      });
+    const deliver=new Date(deliveredAt).getTime();
+    const now =new Date().getTime();
+
+    const days= Math.floor((deliver-now)/(24*60*60*1000))
+    const hours=Math.floor(((deliver-now)-days*(24*60*60*1000))/(60*60*1000))
+    setDays(days)
+    setHours(hours)
+    toast.success('Warehouse updated in the cart');
   };
   return (
 
@@ -126,10 +118,10 @@ export default function CartScreen(){
     ) : error ? (
       <div className="alert-error">{error}</div>
     ) :(
-      <h1 className="mb-4 text-xl">All the items which are delivered and which are yet to deliver can be seen here.</h1>)}
+      <h1 className="mb-4 text-xl">All the orders which are yet to deliver can be seen here</h1>)}
       {products.length === 0 ? (
         <div>
-          Order History is empty.Letss go for shopping <Link href="/">Go shopping</Link>
+          No live orders. <Link href="/">Go shopping</Link>
         </div>
       ) : (
         <div className="grid md:grid-cols-4 md:gap-5">
@@ -140,8 +132,7 @@ export default function CartScreen(){
                 <tr>
                   <th className="p-5 text-left">Order ID</th>
                   <th className="p-5 text-right">Item</th>
-                  <th className="p-5 text-right">Ordered On</th>
-                  <th className="p-5">Status</th>
+                  <th className="p-5">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,23 +141,32 @@ export default function CartScreen(){
                     <td className="p-5 text-left">
                       {item.orderId}
                     </td>
-                    <td className="p-5 text-right">
+                    <td>
                       <Link href={`/product/${item.product.itemId}`} legacyBehavior>
                         <a className="flex items-right">
                           {item.product.itemName}
                         </a>
                       </Link>
                     </td>
-                    <td className="p-5 text-right">
-                      {item.paidAt.toLocaleString()}
-                    </td>
                     <td className="p-5 text-center">
-                      {!item.isDelivered && <button className="primary-button" onClick={() => updateLiveLocation(item.product.itemId,item.returnDeadline,item.paidAt,item.product.quantity,item.product.itemName)}>Cancel Order</button>}
-                      {item.isReturned &&<h1 classname="text-l">Returned</h1>}
-                      {item.isDelivered && !item.isReturned && <button className="primary-button" onClick={() => removeOrderHandler(item.product.itemId,item.paidAt,item.product.quantity,item.product.itemName)}>
-                         Return
-                      </button>}
+                     <div className="m-20">
+                     <button className="secondary-button" onClick={() => updateLiveLocation(item.product.itemId,item.deliveredAt)}>
+                         Click to see live Location
+                      </button>
+                      </div>
+                      <button className="primary-button" onClick={() => removeOrderHandler(item.product.itemId,item.paidAt,item.product.quantity,item.product.itemName)}>
+                         Cancel Order
+                      </button>
                     </td>
+                    {clicked &&
+                    <div>
+                    <h3 className="mb-4 text-xl"><strong>House No.:</strong>{whouse.houseNo}</h3>
+                    <h3 className="mb-4 text-xl"><strong>City:</strong>{whouse.city}</h3>
+                    <h3 className="mb-4 text-xl"><strong>Postal Code:</strong>{whouse.postalCode}</h3>
+                    <h3 className="mb-4 text-xl"><strong>Country:</strong>{whouse.Country}</h3>
+                    <h3 className="mb-4 text-xl"><strong>Delivery in:</strong> {days} Days  {hours} Hours</h3>
+                    </div>
+                  }
                   </tr>
                   
                 ))}

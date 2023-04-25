@@ -140,3 +140,9 @@ textarea {
 .alert-success {
   @apply my-3 rounded-lg bg-green-100 p-3 text-green-700;
 }
+
+.dotted-line{
+  
+    border-top: 1px dotted black;
+  
+}

@@ -2,38 +2,38 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    admin: { type: mongoose.Schema.Types.ObjectId, ref: 'Seller', required: true },
-    orderItems: [
-      {
-        name: { type: String, required: true },
+    orderId:  { type:String, required: true },
+    userEmail: { type: String, required: true },
+    product:{
+        itemName: { type: String, required: true },
         quantity: { type: Number, required: true },
-        image: { type: String, required: true },
-        price: { type: Number, required: true },
+        itemId:{ type: String, required: true },
       },
-    ],
-    shippingAddress: {
+    address: {
       fullName: { type: String, required: true },
-      address: { type: String, required: true },
+      houseNo: { type: String, required: true },
       city: { type: String, required: true },
       postalCode: { type: String, required: true },
       country: { type: String, required: true },
     },
-    paymentMethod: { type: String, required: true },
-    paymentResult: { id: String, status: String, email_address: String },
-    itemsPrice: { type: Number, required: true },
-    shippingPrice: { type: Number, required: true },
-    taxPrice: { type: Number, required: true },
-    totalPrice: { type: Number, required: true },
-    isPaid: { type: Boolean, required: true, default: false },
+    selectedPaymentMethod: { type: String, required: true },
     isDelivered: { type: Boolean, required: true, default: false },
-    paidAt: { type: Date },
-    deliveredAt: { type: Date },
+    paidAt: { type: Date,required:true },
+    deliveredAt: { type: Date,required:true},
+    returnDeadline: {type :Date , required:true},
+    isReturned : { type: Boolean, required: true, default: false },
   },
   {
     timestamps: true,
   }
 );
-
+orderSchema.pre('save', function(next) {
+  const deliver = new Date(this.deliveredAt);
+  const now =new Date();
+  if (this.isModified('deliveredAt') && deliver<=now) {
+    this.isDelivered = true;
+  }
+  next();
+});
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 export default Order;

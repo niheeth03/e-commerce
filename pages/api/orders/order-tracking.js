@@ -4,12 +4,9 @@ import db from '../../../utils/db';
 
 const handler = async (req, res) => {
   const session = await getSession({ req });
-  if (!session) {
-    return res.status(401).send({ message: 'signin required' });
-  }
-  const { user } = session;
   await db.connect();
-  const orders = await Order.find({ user: user._id });
+  console.log(session.user.email)
+  const orders = await Order.find({ userEmail: session.user.email, isDelivered:false});
   await db.disconnect();
   res.send(orders);
 };

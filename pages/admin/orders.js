@@ -28,7 +28,14 @@ export default function AdminOrderScreen() {
     const fetchData = async () => {
       try {
         dispatch({ type: 'FETCH_REQUEST' });
-        const { data } = await axios.get(`/api/admin/orders`);
+        const dat= await axios.get(`/api/sellerID`);
+        console.log(dat.data);
+        let arr = dat.data;
+        console.log(arr)
+        const result = arr.map(item => item.itemID);
+        console.log(result);
+
+        const { data } = await axios.post(`/api/admin/orders`,{result});
         dispatch({ type: 'FETCH_SUCCESS', payload: data });
       } catch (err) {
         dispatch({ type: 'FETCH_FAIL', payload: getError(err) });
@@ -43,18 +50,12 @@ export default function AdminOrderScreen() {
         <div>
           <ul>
             <li>
-              <Link href="/admin/dashboard">Dashboard</Link>
-            </li>
-            <li>
               <Link href="/admin/orders" legacyBehavior>
                 <a className="font-bold">Orders</a>
               </Link>
             </li>
             <li>
               <Link href="/admin/products">Products</Link>
-            </li>
-            <li>
-              <Link href="/admin/users">Users</Link>
             </li>
           </ul>
         </div>
@@ -70,40 +71,36 @@ export default function AdminOrderScreen() {
               <table className="min-w-full">
                 <thead className="border-b">
                   <tr>
-                    <th className="px-5 text-left">ID</th>
-                    <th className="p-5 text-left">USER</th>
-                    <th className="p-5 text-left">DATE</th>
-                    <th className="p-5 text-left">TOTAL</th>
-                    <th className="p-5 text-left">PAID</th>
-                    <th className="p-5 text-left">DELIVERED</th>
-                    <th className="p-5 text-left">ACTION</th>
+                    <th className="px-5 text-left">ORDER ID</th>
+                    <th className="p-5 text-left">USER EMAIL</th>
+                    <th className="p-5 text-left">ITEM NAME</th>
+                    <th className="p-5 text-left">TOTAL QUANTITY</th>
+                    <th className="p-5 text-left">PAID AT</th>
+                    <th className="p-5 text-left">DELIVERED?</th>
+                    <th className="p-5 text-left">RETURNED?</th>
                   </tr>
                 </thead>
                 <tbody>
                   {orders.map((order) => (
                     <tr key={order._id} className="border-b">
-                      <td className="p-5">{order._id.substring(20, 24)}</td>
+                      <td className="p-5">{order.orderId}</td>
                       <td className="p-5">
-                        { order.user.name}
+                        { order.userEmail}
                       </td>
+                      <td className="p-5">{order.product.itemName}</td>
+                      <td className="p-5 text-center">{order.product.quantity}</td>
                       <td className="p-5">
-                        {order.createdAt.substring(0, 10)}
-                      </td>
-                      <td className="p-5">${order.totalPrice}</td>
-                      <td className="p-5">
-                        {order.isPaid
-                          ? `${order.paidAt.substring(0, 10)}`
-                          : 'Not paid'}
+                           {order.paidAt}
                       </td>
                       <td className="p-5">
                         {order.isDelivered
-                          ? `${order.deliveredAt.substring(0, 10)}`
+                          ? 'Delivered'
                           : 'Not delivered'}
                       </td>
                       <td className="p-5">
-                        <Link href={`/order/${order._id}`} passHref legacyBehavior>
-                          <a>Details</a>
-                        </Link>
+                        {order.isReturned
+                          ? 'Returned'
+                          : 'Not Returned'}
                       </td>
                     </tr>
                   ))}

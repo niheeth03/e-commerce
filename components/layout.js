@@ -7,8 +7,8 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {Menu} from "@headlessui/react";
 import DropDownLink from "./DropDownLink"
-import { useRouter } from 'next/router';
-import { SearchIcon } from '@heroicons/react/outline';
+// import { useRouter } from 'next/router';
+// import { SearchIcon } from '@heroicons/react/outline';
 
 export default function Layout({title,children}) {
     const { status, data: session } = useSession();
@@ -27,13 +27,13 @@ export default function Layout({title,children}) {
         signOut({callbackUrl:'/login'});
 
     }
-    const [query, setQuery] = useState('');
+    // const [query, setQuery] = useState('');
 
-    const router = useRouter();
-    const submitHandler = (e) => {
-      e.preventDefault();
-      router.push(`/search?query=${query}`);
-    };
+    // const router = useRouter();
+    // const submitHandler = (e) => {
+    //   e.preventDefault();
+  
+    // };
 
   
   return (
@@ -46,25 +46,12 @@ export default function Layout({title,children}) {
         <ToastContainer position="bottom-center" limit={1} />
         <div className="flex min-h-screen flex-col justify-between">
             <header>
-                <nav className="flex h-18 px-4 items-center justify-between shadow-md">
+                <nav className="flex h-18 px-4 items-center justify-between shadow-md bg-purple-200">
                     <Link href="/"><h1 className="text-lg font-bold">Versa</h1></Link> 
                     <form
-              onSubmit={submitHandler}
+              // onSubmit={submitHandler}
               className="mx-auto  hidden w-full justify-center md:flex"
             >
-              <input
-                onChange={(e) => setQuery(e.target.value)}
-                type="text"
-                className="rounded-tr-none rounded-br-none p-1 text-sm   focus:ring-0"
-                placeholder="Search products"
-              />
-              <button
-                className="rounded rounded-tl-none rounded-bl-none bg-amber-300 p-1 text-sm dark:text-black"
-                type="submit"
-                id="button-addon2"
-              >
-                <SearchIcon className="h-5 w-5"></SearchIcon>
-              </button>
             </form>
                     <div className="p-2">
                         <Link href='/cart' legacyBehavior><a className="p-2">Cart {cartItemsCount > 0 && (
@@ -82,6 +69,7 @@ export default function Layout({title,children}) {
                                 <Menu.Items className="absolute right-0 w-56 origin-top-right shadow-lg bg-white">
                                     <Menu.Item><DropDownLink className="dropdown-link" href="/profile">Profile</DropDownLink></Menu.Item>
                                     <Menu.Item><DropDownLink className="dropdown-link" href="/order-history">Order History</DropDownLink></Menu.Item>
+                                    <Menu.Item><DropDownLink className="dropdown-link" href="/order-tracking">Order Tracking</DropDownLink></Menu.Item>
                                     {session.user.role=='seller' && (
                                     <Menu.Item>
                                         <DropDownLink
