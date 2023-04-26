@@ -7,7 +7,7 @@ export default function productItem({product, addToCartHandler }) {
     <div className='card'>
         <Link href={`/product/${product.itemId}`} legacyBehavior>
             <a>
-                <img src={product.image} alt={product.itemName} className="rounded shadow object-cover h-64 w-full"/>
+                <img src={product.itemImage} alt={product.itemName} className="rounded shadow object-cover h-64 w-full"/>
             </a>
         </Link>
         <div className='flex flex-col items-center justify-center p-5'>

@@ -1,4 +1,4 @@
-import Image from 'next/image';
+
 import Link from 'next/link';
 import Layout from '../../components/layout';
 import axios from 'axios';
@@ -65,13 +65,13 @@ export default function ProductScreen(props) {
         </div>
       <div className="grid md:grid-cols-4 md:gap-3">
         <div className="md:col-span-2">
-            <Image
-                src={product.image}
+            <img
+                src={product.itemImage}
                 alt={product.itemName}
                 width={640}
                 height={640}
                 layout="responsive"
-          ></Image>
+          ></img>
         </div>
         <div>
           <ul>
